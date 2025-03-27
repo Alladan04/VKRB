@@ -21,14 +21,34 @@ func NewGenerator() *Generator {
 	}
 }
 
-func (g *Generator) GenerateModel() ([]byte, error) {
-	var matrixHardCoded = [][]int64{
-		{0, 0, 0, 0},
-		{1, 1, 0, 0},
-		{1, 1, 0, 0},
-		{0, 0, 0, 0},
+//var matrixHardCoded = [][]int64{
+//	{0, 0, 0, 0},
+//	{1, 1, 0, 0},
+//	{1, 1, 0, 0},
+//	{0, 0, 0, 0},
+//}
+
+func (g *Generator) UnmarshalModel(xmlData []byte) (Model, error) {
+	var model Model
+	err := xml.Unmarshal(xmlData, &model)
+	if err != nil {
+		return Model{}, fmt.Errorf("xml.Unmarshal:%v", err)
 	}
 
+	return model, nil
+}
+
+func (g *Generator) MarshalModel(model Model) ([]byte, error) {
+
+	data, err := xml.Marshal(model)
+	if err != nil {
+		return nil, fmt.Errorf("xml.Marshal:%v", err)
+	}
+
+	return data, nil
+}
+
+func (g *Generator) GenerateModelFromLabyrinth(matrixHardCoded [][]int64) ([]byte, error) {
 	params := g.getParamsFromMatrix(matrixHardCoded)
 	if len(params) == 0 {
 		return nil, fmt.Errorf("no parameters generated")
