@@ -1,9 +1,9 @@
 package calc_path
 
 type CalculatePathRequest struct {
-	Start      Point `json:"start"`
-	End        Point `json:"end"`
-	LabirintID int64 `json:"labirintID"`
+	Start      Point   `json:"start"`
+	End        []Point `json:"end"`
+	LabirintID int64   `json:"labirintID"`
 }
 
 type Point struct {

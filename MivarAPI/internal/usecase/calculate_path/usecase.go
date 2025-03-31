@@ -3,26 +3,21 @@ package calculate_path
 import (
 	"github.com/sirupsen/logrus"
 
-	"mivar_robot_api/internal/controller/http/calc_path"
-	"mivar_robot_api/internal/entity"
-	"mivar_robot_api/internal/repo/cache"
-	"mivar_robot_api/pkg/generator"
+	"mivar_robot_api/internal/client/mivar"
 )
 
 type Usecase struct {
 	log          *logrus.Logger
-	inMemRepo    cache.Repo
-	modelManager generator.Generator
+	inMemRepo    ModelRepo
+	modelManager ModelManager
+	wimiCli      mivar.Client
 }
 
-func New(log *logrus.Logger, inMemRepo cache.Repo, modelManager generator.Generator) *Usecase {
+func New(log *logrus.Logger, inMemRepo ModelRepo, modelManager ModelManager, wimiCli mivar.Client) *Usecase {
 	return &Usecase{
 		log:          log,
 		inMemRepo:    inMemRepo,
 		modelManager: modelManager,
+		wimiCli:      wimiCli,
 	}
-}
-
-func (u *Usecase) CalculatePath(start entity.Point, end entity.Point, modelID int64) (calc_path.CalculatePathResponse, error) {
-
 }

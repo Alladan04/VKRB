@@ -2,21 +2,70 @@ package main
 
 import (
 	"context"
-	"log"
+	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
+	"mivar_robot_api/internal/client/mivar"
+	"mivar_robot_api/internal/config"
 	"mivar_robot_api/internal/controller/http/calc_path"
+	cacheRepo "mivar_robot_api/internal/repo/cache"
+	manager "mivar_robot_api/internal/service/model_manager"
+	"mivar_robot_api/pkg/cache"
+	"mivar_robot_api/pkg/generator"
+)
+
+const (
+	wait        = time.Second * 5
+	initTimeout = time.Second * 15
 )
 
 func main() {
-	var wait = time.Second * 5
+	var configPath string
+	flag.StringVar(&configPath, "config", "", "path to config file")
+	flag.Parse()
 
-	calcPathHandler := calc_path.NewCalcPathHandler()
+	if configPath == "" {
+		configPath = "config.yaml"
+	}
+	conf, err := configer.LoadConfig(configPath)
+	if err != nil {
+		panic(fmt.Sprintf("Cant laod config: %v", err))
+	}
+
+	logger := logrus.New()
+	wimiCli, err := mivar.New(
+		mivar.ClientConfig{
+			BaseURL:    "http://127.0.0.1:8092",
+			Timeout:    time.Second * 10,
+			HTTPClient: &http.Client{},
+		})
+	modelGenerator := generator.NewGenerator()
+	inMemCache := cache.NewCache()
+	cacheRepository := cacheRepo.New(inMemCache)
+
+	modelManager := manager.New(logger, cacheRepository, modelGenerator, wimiCli, *conf)
+
+	ctx, cancel := context.WithTimeout(context.Background(), initTimeout)
+	defer cancel()
+
+	err = modelManager.LoadModels(ctx)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to init: %v", err))
+	}
+
+	runService(logger)
+
+}
+
+func runService(log *logrus.Logger) {
+	calcPathHandler := calc_path.NewCalcPathHandler(log)
 	r := mux.NewRouter()
 	// Add your routes as needed
 	r.HandleFunc("/calcPath", calcPathHandler.Handle).Methods("POST")
@@ -58,4 +107,5 @@ func main() {
 	<-ctx.Done()
 	log.Println("shutting down")
 	os.Exit(0)
+
 }

@@ -1,0 +1,4 @@
+matrix_file_path:
+  - "./data/labirinth.txt"
+  - "./data/labirinth2.txt"
+init_timeout: "1m"  # 1 минута

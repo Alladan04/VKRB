@@ -13,9 +13,9 @@ COPY WiMi-0.1.7.deb /tmp/WiMi-0.1.7.deb
 RUN dpkg --add-architecture amd64 && dpkg -i /tmp/WiMi-0.1.7.deb || apt-get -f install -y
 
 # Создаём директорию и добавляем конфиг MivREST.ini
-RUN mkdir -p /usr/local/bin/WiMi/ \
-    && echo "[listener]\nport=8092\nminThreads=10\nmaxThreads=100" > /usr/local/bin/WiMi/MivREST.ini
-
+RUN mkdir -p /usr/local/bin/WiMi/
+   # && echo "[listener]\nport=8092\nminThreads=10\nmaxThreads=1000\nmaxRequestSize=100000000000\nmaxMultiPartSize=100000000000" > /usr/local/bin/WiMi/MivREST.ini
+COPY MivREST.ini /usr/local/bin/WiMi/MivREST.ini
 # Создаём environment-файл
 RUN echo 'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/bin/WiMi/libs"' > /usr/local/bin/WiMi/environment
 

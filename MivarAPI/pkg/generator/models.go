@@ -61,3 +61,8 @@ type Model struct {
 	Class     Class     `xml:"class"`
 	Relations Relations `xml:"relations"`
 }
+
+type Coordinate struct {
+	X string
+	Y string
+}

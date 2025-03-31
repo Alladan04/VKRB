@@ -28,33 +28,13 @@ func NewGenerator() *Generator {
 //	{0, 0, 0, 0},
 //}
 
-func (g *Generator) UnmarshalModel(xmlData []byte) (Model, error) {
-	var model Model
-	err := xml.Unmarshal(xmlData, &model)
-	if err != nil {
-		return Model{}, fmt.Errorf("xml.Unmarshal:%v", err)
-	}
-
-	return model, nil
-}
-
-func (g *Generator) MarshalModel(model Model) ([]byte, error) {
-
-	data, err := xml.Marshal(model)
-	if err != nil {
-		return nil, fmt.Errorf("xml.Marshal:%v", err)
-	}
-
-	return data, nil
-}
-
-func (g *Generator) GenerateModelFromLabyrinth(matrixHardCoded [][]int64) ([]byte, error) {
-	params := g.getParamsFromMatrix(matrixHardCoded)
+func (g *Generator) GenerateModelFromLabyrinth(matrixHardCoded [][]uint8, modelID string) ([]byte, error) {
+	params := g.generateParamsFromMatrix(matrixHardCoded)
 	if len(params) == 0 {
 		return nil, fmt.Errorf("no parameters generated")
 	}
 
-	relations := g.getRelations()
+	relations := g.generateRelations()
 	if len(relations) == 0 {
 		return nil, fmt.Errorf("no relations generated")
 	}
@@ -64,16 +44,16 @@ func (g *Generator) GenerateModelFromLabyrinth(matrixHardCoded [][]int64) ([]byt
 	model := Model{
 		FormatVer: "2.0",
 		ID:        uuid.NewString(),
-		ShortName: "Model 1",
-		Desc:      "Model 1",
+		ShortName: "Model " + modelID,
+		Desc:      "Model " + modelID,
 		Class: Class{
-			ID:        uuid.NewString(),
-			ShortName: "Model 1",
+			ID:        modelID,
+			ShortName: "Model " + modelID,
 			Parameters: Parameters{
 				Parameters: params,
 			},
 			Rules: Rules{
-				Rules: g.getRulesFromParams(params, relationID),
+				Rules: g.generateRulesFromParams(params, relationID),
 			},
 		},
 		Relations: Relations{
@@ -90,7 +70,7 @@ func (g *Generator) GenerateModelFromLabyrinth(matrixHardCoded [][]int64) ([]byt
 	return output, nil
 }
 
-func (g *Generator) getParamsFromMatrix(matrix [][]int64) []Parameter {
+func (g *Generator) generateParamsFromMatrix(matrix [][]uint8) []Parameter {
 	if len(matrix) == 0 {
 		g.log.Warn("Matrix is empty")
 		return []Parameter{}
@@ -114,7 +94,7 @@ func (g *Generator) getParamsFromMatrix(matrix [][]int64) []Parameter {
 	return params
 }
 
-func (g *Generator) getRelations() []Relation {
+func (g *Generator) generateRelations() []Relation {
 	relations := make([]Relation, 0, 1)
 	relations = append(relations, Relation{
 		ID:           uuid.NewString(),
@@ -128,7 +108,7 @@ func (g *Generator) getRelations() []Relation {
 	return relations
 }
 
-func (g *Generator) getRulesFromParams(params []Parameter, relationID string) []Rule {
+func (g *Generator) generateRulesFromParams(params []Parameter, relationID string) []Rule {
 	if len(params) == 0 {
 		g.log.Warn("Empty Params")
 		return []Rule{}
