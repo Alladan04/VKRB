@@ -54,6 +54,7 @@ func (h *CalcPathHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//parse(resp.Path)
 	w.Header().Set("Content-Type", "application/json")
 
 	err = json.NewEncoder(w).Encode(resp)

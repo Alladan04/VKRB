@@ -8,13 +8,13 @@ import (
 
 type Manager struct {
 	log          *logrus.Logger
-	inMemRepo    ModelRepo
+	inMemRepo    Repo
 	modelManager ModelGenerator
 	wimiCli      MivarClient
 	cfg          configer.Config
 }
 
-func New(log *logrus.Logger, inMemRepo ModelRepo, modelManager ModelGenerator, wimiCli MivarClient, cfg configer.Config) *Manager {
+func New(log *logrus.Logger, inMemRepo Repo, modelManager ModelGenerator, wimiCli MivarClient, cfg configer.Config) *Manager {
 	return &Manager{
 		log:          log,
 		inMemRepo:    inMemRepo,

@@ -2,22 +2,22 @@ package calculate_path
 
 import (
 	"github.com/sirupsen/logrus"
-
-	"mivar_robot_api/internal/client/mivar"
 )
 
 type Usecase struct {
-	log          *logrus.Logger
-	inMemRepo    ModelRepo
-	modelManager ModelManager
-	wimiCli      mivar.Client
+	log            *logrus.Logger
+	inMemRepo      ModelRepo
+	modelGenerator ModelGenerator
+	manager        ModelManager
+	wimiCli        Client
 }
 
-func New(log *logrus.Logger, inMemRepo ModelRepo, modelManager ModelManager, wimiCli mivar.Client) *Usecase {
+func New(log *logrus.Logger, inMemRepo ModelRepo, modelGenerator ModelGenerator, wimiCli Client, manager ModelManager) *Usecase {
 	return &Usecase{
-		log:          log,
-		inMemRepo:    inMemRepo,
-		modelManager: modelManager,
-		wimiCli:      wimiCli,
+		log:            log,
+		inMemRepo:      inMemRepo,
+		modelGenerator: modelGenerator,
+		wimiCli:        wimiCli,
+		manager:        manager,
 	}
 }

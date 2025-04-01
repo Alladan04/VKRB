@@ -14,9 +14,11 @@ type ModelGenerator interface {
 	GenerateModelFromLabyrinth(matrixHardCoded [][]uint8, modelID string) ([]byte, error)
 }
 
-type ModelRepo interface {
+type Repo interface {
 	GetFromCache(key string) ([]byte, error)
 	AddToCache(data []byte, key string)
+	AddLabirintToCache(data [][]uint8, key string)
+	GetLabirintFromCache(key string) ([][]uint8, error)
 }
 
 type MivarClient interface {

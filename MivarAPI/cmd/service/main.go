@@ -17,6 +17,7 @@ import (
 	"mivar_robot_api/internal/controller/http/calc_path"
 	cacheRepo "mivar_robot_api/internal/repo/cache"
 	manager "mivar_robot_api/internal/service/model_manager"
+	"mivar_robot_api/internal/usecase/calculate_path"
 	"mivar_robot_api/pkg/cache"
 	"mivar_robot_api/pkg/generator"
 )
@@ -48,7 +49,8 @@ func main() {
 		})
 	modelGenerator := generator.NewGenerator()
 	inMemCache := cache.NewCache()
-	cacheRepository := cacheRepo.New(inMemCache)
+	inMemCacheLabirint := cache.NewCache()
+	cacheRepository := cacheRepo.New(inMemCache, inMemCacheLabirint)
 
 	modelManager := manager.New(logger, cacheRepository, modelGenerator, wimiCli, *conf)
 
@@ -60,12 +62,13 @@ func main() {
 		panic(fmt.Sprintf("Failed to init: %v", err))
 	}
 
-	runService(logger)
+	runService(logger, cacheRepository, modelGenerator, wimiCli, modelManager)
 
 }
 
-func runService(log *logrus.Logger) {
-	calcPathHandler := calc_path.NewCalcPathHandler(log)
+func runService(log *logrus.Logger, inMemCache *cacheRepo.Repo, modelGenerator *generator.Generator, wimiCli *mivar.Client, manager *manager.Manager) {
+	calculateUsecase := calculate_path.New(log, inMemCache, modelGenerator, wimiCli, manager)
+	calcPathHandler := calc_path.NewCalcPathHandler(log, calculateUsecase)
 	r := mux.NewRouter()
 	// Add your routes as needed
 	r.HandleFunc("/calcPath", calcPathHandler.Handle).Methods("POST")

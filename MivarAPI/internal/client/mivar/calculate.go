@@ -36,7 +36,7 @@ func (c *Client) CalculatePath(ctx context.Context, in dto.CalculateRrequest) (*
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status code %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("unexpected status code %d: %s with request: %s", resp.StatusCode, string(body), string(bodyBytes))
 	}
 
 	var data dto.CalculateResponse

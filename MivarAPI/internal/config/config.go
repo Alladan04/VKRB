@@ -10,8 +10,13 @@ import (
 )
 
 type Config struct {
-	MatrixFilePath []string      `yaml:"matrix_file_path"`
-	InitTimeout    time.Duration `yaml:"init_timeout"`
+	Model       []ModelCfg    `yaml:"model"`
+	InitTimeout time.Duration `yaml:"init_timeout"`
+}
+
+type ModelCfg struct {
+	FilePath string `yaml:"matrix_file_path"`
+	Size     int    `yaml:"size"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -33,8 +38,8 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	// 4. Валидация
-	if len(cfg.MatrixFilePath) == 0 {
-		return nil, errors.New("matrix_file_path cannot be empty")
+	if len(cfg.Model) == 0 {
+		return nil, errors.New("models cannot be empty")
 	}
 
 	if cfg.InitTimeout <= 0 {

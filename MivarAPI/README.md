@@ -7,3 +7,41 @@
 - Обновление модели в МБЗ
 - Расчет пути робота для перемещения между заданными точками
 - Получение метаинформации о миварной модели
+
+### Логика
+#### Запуск сервиса
+При запуске сервиса, вызывается ```Manager```, который считывает файлы лабиринтов,
+(директории и мета-информация задаются конфигом в корне проекта).
+Далее:
+- Лабиринты загружаются в кэш
+- Генерируется XML, который загружается в WiMI и в кэш
+
+После этого сервис становится доступен и может принимать запросы.
+
+При завершении работы сервиса используем graceful shutdown.
+#### CalculatePath
+Контракт:
+```go
+type CalculatePathRequest struct {
+	Start      Point   `json:"start"`
+	End        []Point `json:"end"`
+	LabirintID int64   `json:"labirintID"`
+}
+
+type Point struct {
+	X int64 `json:"x"`
+	Y int64 `json:"y"`
+}
+
+type Transition struct {
+	From Point `json:"start"`
+	To   Point `json:"end"`
+}
+
+type CalculatePathResponse struct {
+	Path []Transition `json:"path"`
+	Time int64        `json:"time"` //время вычисления маршрута в секундах
+}
+
+```
+Если передан пустой массив ```End``` - самостоятельно найдет все доступные выходы.

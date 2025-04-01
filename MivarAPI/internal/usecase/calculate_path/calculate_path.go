@@ -2,6 +2,7 @@ package calculate_path
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/AlekSi/pointer"
@@ -22,7 +23,7 @@ func (u *Usecase) CalculatePath(
 		return nil, 0, err
 	}
 
-	model, err := u.modelManager.UnmarshalModel(modelBytes)
+	model, err := u.modelGenerator.UnmarshalModel(modelBytes)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -53,20 +54,31 @@ func (u *Usecase) getMivarCalculateRequest(
 	modelID string,
 	model generator.Model,
 ) (dto.CalculateRrequest, error) {
-	modelOutputCoordinates := make([]generator.Coordinate, 0, len(end))
-	for _, point := range end {
-		modelOutputCoordinates = append(modelOutputCoordinates, generator.Coordinate{
-			X: strconv.Itoa(int(point.X)),
-			Y: strconv.Itoa(int(point.Y)),
-		})
+	modelOutputCoordinates := u.pointsToCoordinates(end)
+	if len(end) == 0 {
+		points, err := u.manager.GetExitsByModelID(modelID)
+		u.log.Info(points)
+		if err != nil {
+			u.log.Errorf("failed to get exits by model id %v", modelID)
+			return dto.CalculateRrequest{}, err
+		}
+
+		modelOutputCoordinates = u.pointsToCoordinates(points)
 	}
 
-	outputParams, err := u.modelManager.GetParameterIDsByCoordinates(model, modelOutputCoordinates)
+	u.log.Infof("model output coordinates: %v", modelOutputCoordinates)
+
+	outputParams, err := u.modelGenerator.GetParameterIDsByCoordinates(model, modelOutputCoordinates)
 	if err != nil {
 		return dto.CalculateRrequest{}, err
 	}
 
-	incomingParams, err := u.modelManager.GetParameterIDsByCoordinates(model, []generator.Coordinate{{
+	if len(outputParams) == 0 {
+		return dto.CalculateRrequest{}, errors.New("all end points are unavailable")
+	}
+	u.log.Infof("model output parameters: %v", outputParams)
+
+	incomingParams, err := u.modelGenerator.GetParameterIDsByCoordinates(model, []generator.Coordinate{{
 		X: strconv.Itoa(int(start.X)),
 		Y: strconv.Itoa(int(start.Y)),
 	}})
@@ -105,7 +117,7 @@ func (u *Usecase) dtoAlgorithmToPath(dto dto.CalculateResponse, model generator.
 		inputParam := transition.InputParameters[0]
 		outputParam := transition.OutputParameters[0]
 
-		coordinates, err := u.modelManager.GetCoordinatesByParameterIDs(model, []string{
+		coordinates, err := u.modelGenerator.GetCoordinatesByParameterIDs(model, []string{
 			inputParam.ModelParameterID,
 			outputParam.ModelParameterID,
 		})
@@ -150,4 +162,15 @@ func (u *Usecase) coordinatesToPoints(coordinates map[string]generator.Coordinat
 	}
 
 	return points
+}
+
+func (u *Usecase) pointsToCoordinates(points []entity.Point) []generator.Coordinate {
+	coordinates := make([]generator.Coordinate, 0, len(points))
+	for _, point := range points {
+		coordinates = append(coordinates, generator.Coordinate{
+			X: strconv.FormatInt(point.X, 10),
+			Y: strconv.FormatInt(point.Y, 10),
+		})
+	}
+	return coordinates
 }

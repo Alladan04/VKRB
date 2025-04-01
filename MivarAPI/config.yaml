@@ -1,4 +1,6 @@
-matrix_file_path:
-  - "./data/labirinth.txt"
-  - "./data/labirinth2.txt"
-init_timeout: "1m"  # 1 минута
+model:
+  - matrix_file_path: "./data/labirinth.txt"
+    size: 41 #не используется
+  - matrix_file_path: "./data/labirinth2.txt"
+    size: 41 #не используется
+init_timeout: 1m

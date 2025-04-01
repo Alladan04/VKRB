@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 
 	"mivar_robot_api/internal/client/dto"
@@ -16,9 +17,9 @@ import (
 
 func (m *Manager) LoadModels(ctx context.Context) error {
 	var wg sync.WaitGroup //можно тоже на errgroup заменить по идее
-	errCh := make(chan error, len(m.cfg.MatrixFilePath))
+	errCh := make(chan error, len(m.cfg.Model))
 
-	for i, path := range m.cfg.MatrixFilePath {
+	for i, modelCfg := range m.cfg.Model {
 		wg.Add(1)
 
 		go func() {
@@ -27,16 +28,21 @@ func (m *Manager) LoadModels(ctx context.Context) error {
 			//ctx, cancel := context.WithTimeout(context.Background(), mc.InitTimeout)
 			//defer cancel()
 
-			matrix, err := readMatrixFromFile(path)
+			matrix, err := readMatrixFromFile(modelCfg.FilePath)
 			if err != nil {
-				errCh <- fmt.Errorf("failed to read matrix for %s: %w", path, err)
+				errCh <- fmt.Errorf("failed to read matrix for %s: %w", modelCfg.FilePath, err)
 				return
 			}
 
 			model, err := m.modelManager.GenerateModelFromLabyrinth(matrix, strconv.Itoa(i))
 			if err != nil {
-				errCh <- fmt.Errorf("failed to generate model %s: %w", path, err)
+				errCh <- fmt.Errorf("failed to generate model %s: %w", modelCfg.FilePath, err)
 				return
+			}
+
+			err = os.WriteFile(fmt.Sprintf("%s_%s.xml", uuid.NewString(), strconv.Itoa(i)), model, 777)
+			if err != nil {
+				panic(err)
 			}
 
 			// Параллельная загрузка в кэш и сервис
@@ -45,10 +51,16 @@ func (m *Manager) LoadModels(ctx context.Context) error {
 				m.inMemRepo.AddToCache(model, strconv.Itoa(i))
 				return nil
 			})
+
+			g.Go(func() error {
+				m.inMemRepo.AddLabirintToCache(matrix, strconv.Itoa(i))
+				return nil
+			})
+
 			g.Go(func() error {
 				res, grErr := m.wimiCli.AddModel(grCtx, dto.AddModelRequest{
 					ModelID:       strconv.Itoa(i),
-					ModelPoolSize: "5",
+					ModelPoolSize: "100",
 					ModelXML:      string(model),
 				})
 
@@ -63,11 +75,11 @@ func (m *Manager) LoadModels(ctx context.Context) error {
 			})
 
 			if err := g.Wait(); err != nil {
-				errCh <- fmt.Errorf("failed to process model %s: %w", path, err)
+				errCh <- fmt.Errorf("failed to process model %s: %w", modelCfg.FilePath, err)
 				return
 			}
 
-			log.Printf("Successfully loaded model %s", path)
+			log.Printf("Successfully loaded model %s", modelCfg.FilePath)
 		}()
 	}
 
