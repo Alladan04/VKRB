@@ -8,6 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"mivar_robot_api/internal/controller/http/dto"
 	"mivar_robot_api/internal/entity"
 )
 
@@ -31,7 +32,7 @@ func (h *CalcPathHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var bodyDTO CalculatePathRequest
+	var bodyDTO dto.CalculatePathRequest
 	err = json.Unmarshal(body, &bodyDTO)
 	if err != nil {
 		h.log.Errorf("Error parsing body: %v", err)
@@ -64,40 +65,34 @@ func (h *CalcPathHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *CalcPathHandler) convertDTOToEntity(dto CalculatePathRequest) (
+func (h *CalcPathHandler) convertDTOToEntity(dto dto.CalculatePathRequest) (
 	start entity.Point,
 	end []entity.Point,
 	modelID string) {
 	endpoints := make([]entity.Point, 0, len(dto.End))
 	for _, p := range dto.End {
-		endpoints = append(endpoints, entity.Point{
-			X: p.X,
-			Y: p.Y,
-		})
+		endpoints = append(endpoints, p.ToEntity())
 	}
 
-	return entity.Point{
-		X: dto.Start.X,
-		Y: dto.Start.Y,
-	}, endpoints, strconv.Itoa(int(dto.LabirintID))
+	return dto.Start.ToEntity(), endpoints, strconv.Itoa(int(dto.LabirintID))
 }
 
-func (h *CalcPathHandler) convertEntityToDTO(path []entity.Transition, timing int64) (CalculatePathResponse, error) {
-	dtoPath := make([]Transition, 0, len(path))
+func (h *CalcPathHandler) convertEntityToDTO(path []entity.Transition, timing int64) (dto.CalculatePathResponse, error) {
+	dtoPath := make([]dto.Transition, 0, len(path))
 	for _, p := range path {
-		dtoPath = append(dtoPath, Transition{
-			From: Point{
+		dtoPath = append(dtoPath, dto.Transition{
+			From: dto.Point{
 				X: p.From.X,
 				Y: p.From.Y,
 			},
-			To: Point{
+			To: dto.Point{
 				X: p.To.X,
 				Y: p.To.Y,
 			},
 		})
 	}
 
-	return CalculatePathResponse{
+	return dto.CalculatePathResponse{
 		Path: dtoPath,
 		Time: timing,
 	}, nil

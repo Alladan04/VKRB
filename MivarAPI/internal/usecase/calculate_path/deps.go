@@ -15,7 +15,7 @@ type ModelGenerator interface {
 }
 
 type ModelRepo interface {
-	GetFromCache(key string) ([]byte, error)
+	GetModelFromCache(key string) ([]byte, error)
 }
 
 type Client interface {

@@ -2,11 +2,13 @@ package calc_path
 
 import (
 	"fmt"
+
+	"mivar_robot_api/internal/controller/http/dto"
 )
 
 // временный файл для тестирования ручки, отрисовывает найденный путь просто
 // но кажется выводит отзеркаленный))
-func parse(path []Transition) {
+func parse(path []dto.Transition) {
 	// Создаем карту 41x41
 	const size = 41
 	grid := make([][]rune, size)
@@ -36,7 +38,7 @@ func parse(path []Transition) {
 	}
 }
 
-func drawLine(grid [][]rune, From, To Point) {
+func drawLine(grid [][]rune, From, To dto.Point) {
 	// Простая реализация алгоритма Брезенхема для линии
 	x0, y0 := int(From.X), int(From.Y)
 	x1, y1 := int(To.X), int(To.Y)

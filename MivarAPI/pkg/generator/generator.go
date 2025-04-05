@@ -77,8 +77,8 @@ func (g *Generator) generateParamsFromMatrix(matrix [][]uint8) []Parameter {
 	}
 
 	params := make([]Parameter, 0, len(matrix)*len(matrix[0]))
-	for x, row := range matrix {
-		for y, value := range row {
+	for y, row := range matrix {
+		for x, value := range row {
 			if value == 1 {
 				continue
 			}

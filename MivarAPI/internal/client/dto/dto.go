@@ -4,6 +4,8 @@ const (
 	OutputField_TIMING    = "timing"
 	OutputField_ALGORITHM = "algorithm"
 
+	DefaultModelPoolSize = "100"
+
 	ERR_MODEL_EXISTS = 5704
 )
 

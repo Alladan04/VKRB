@@ -16,11 +16,11 @@ func New(modelCache Cache, labirintCache Cache) *Repo {
 	}
 }
 
-func (r *Repo) AddToCache(data []byte, key string) {
+func (r *Repo) UpsertModelToCache(data []byte, key string) {
 	r.modelCache.Set(key, data)
 }
 
-func (r *Repo) GetFromCache(key string) ([]byte, error) {
+func (r *Repo) GetModelFromCache(key string) ([]byte, error) {
 	data, ok := r.modelCache.Get(key)
 	if !ok {
 		return nil, errors.New("model not found")
@@ -29,7 +29,7 @@ func (r *Repo) GetFromCache(key string) ([]byte, error) {
 	return data.([]byte), nil
 }
 
-func (r *Repo) AddLabirintToCache(data [][]uint8, key string) {
+func (r *Repo) UpsertLabirintToCache(data [][]uint8, key string) {
 	r.labirintCache.Set(key, data)
 }
 

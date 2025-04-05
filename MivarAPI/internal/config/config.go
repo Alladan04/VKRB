@@ -15,8 +15,10 @@ type Config struct {
 }
 
 type ModelCfg struct {
-	FilePath string `yaml:"matrix_file_path"`
-	Size     int    `yaml:"size"`
+	FilePath     string `yaml:"matrix_file_path"`
+	Size         int    `yaml:"size"`
+	ModelXmlPath string `yaml:"model_xml_path"`
+	ModelID      string `yaml:"model_id"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
