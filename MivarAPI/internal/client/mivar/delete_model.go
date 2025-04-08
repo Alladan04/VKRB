@@ -13,7 +13,7 @@ func (c *Client) DeleteModel(ctx context.Context, modelID string) error {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodDelete,
-		fmt.Sprintf("%s/Models?modelId=%s", c.baseURL, modelID),
+		fmt.Sprintf("%s/Models?modelID=%s", c.baseURL, modelID),
 		nil,
 	)
 	if err != nil {

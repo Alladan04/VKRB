@@ -29,3 +29,7 @@ func (t Transitions) ToEntity() []entity.Transition {
 	}
 	return result
 }
+
+type MapOut struct {
+	Labirint [][]int `json:"labirint"`
+}

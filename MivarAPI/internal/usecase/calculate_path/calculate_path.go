@@ -1,8 +1,9 @@
-package calculate_path
+package calculate
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/AlekSi/pointer"
@@ -12,35 +13,41 @@ import (
 	"mivar_robot_api/pkg/generator"
 )
 
+var (
+	ErrStartIsWall          = errors.New("start is a wall")
+	ErrEndpointsAnavailable = errors.New("all end points are unavailable")
+)
+
 func (u *Usecase) CalculatePath(
 	ctx context.Context,
 	start entity.Point,
 	end []entity.Point,
 	modelID string,
 ) ([]entity.Transition, int64, error) {
-	modelBytes, err := u.inMemRepo.GetFromCache(modelID)
+	modelBytes, err := u.inMemRepo.GetModelFromCache(modelID)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("inMemRepo.GetModelFromCache:%v", err)
 	}
 
 	model, err := u.modelGenerator.UnmarshalModel(modelBytes)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("modelGenerator.UnmarshalModel:%v", err)
 	}
 
 	wimiReq, err := u.getMivarCalculateRequest(start, end, modelID, model)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("getMivarCalculateRequest:%v", err)
 	}
 
 	clientResp, err := u.wimiCli.CalculatePath(ctx, wimiReq)
 	if err != nil {
-		return nil, 0, err
+		u.log.Errorf("incoming:%v", wimiReq)
+		return nil, 0, fmt.Errorf("wimiCli.CalculatePath:%v", err)
 	}
 
 	path, err := u.dtoAlgorithmToPath(pointer.Get(clientResp), model)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("dtoAlgorithmToPath:%v", err)
 	}
 
 	return path, int64(clientResp.Timing.RequestOutputGeneration +
@@ -59,31 +66,32 @@ func (u *Usecase) getMivarCalculateRequest(
 		points, err := u.manager.GetExitsByModelID(modelID)
 		u.log.Info(points)
 		if err != nil {
-			u.log.Errorf("failed to get exits by model id %v", modelID)
+			u.log.Errorf("failed to get exits by model id %v, err: %v", modelID, err)
 			return dto.CalculateRrequest{}, err
 		}
 
 		modelOutputCoordinates = u.pointsToCoordinates(points)
 	}
 
-	u.log.Infof("model output coordinates: %v", modelOutputCoordinates)
-
 	outputParams, err := u.modelGenerator.GetParameterIDsByCoordinates(model, modelOutputCoordinates)
 	if err != nil {
-		return dto.CalculateRrequest{}, err
+		return dto.CalculateRrequest{}, fmt.Errorf("modelGenerator.GetParameterIDsByCoordinates:%v", err)
 	}
 
 	if len(outputParams) == 0 {
-		return dto.CalculateRrequest{}, errors.New("all end points are unavailable")
+		return dto.CalculateRrequest{}, ErrEndpointsAnavailable
 	}
-	u.log.Infof("model output parameters: %v", outputParams)
 
 	incomingParams, err := u.modelGenerator.GetParameterIDsByCoordinates(model, []generator.Coordinate{{
 		X: strconv.Itoa(int(start.X)),
 		Y: strconv.Itoa(int(start.Y)),
 	}})
 	if err != nil {
-		return dto.CalculateRrequest{}, err
+		return dto.CalculateRrequest{}, fmt.Errorf("modelGenerator.GetParameterIDsByCoordinates:%v", err)
+	}
+
+	if len(incomingParams) == 0 {
+		return dto.CalculateRrequest{}, ErrStartIsWall
 	}
 
 	return dto.CalculateRrequest{
@@ -125,43 +133,34 @@ func (u *Usecase) dtoAlgorithmToPath(dto dto.CalculateResponse, model generator.
 			return nil, err
 		}
 
-		points := u.coordinatesToPoints(coordinates)
-
-		if len(points) != 2 {
+		if len(coordinates) != 2 {
 			u.log.Warningf("unexpected number of points for transition %v, %v", inputParam, outputParam)
 			continue
 		}
 
 		transitions = append(transitions, entity.Transition{
-			From: points[0],
-			To:   points[1],
+			From: u.coordinateToPoint(coordinates[inputParam.ModelParameterID]),
+			To:   u.coordinateToPoint(coordinates[outputParam.ModelParameterID]),
 		})
 	}
 
 	return transitions, nil
 }
 
-func (u *Usecase) coordinatesToPoints(coordinates map[string]generator.Coordinate) []entity.Point {
-	points := make([]entity.Point, 0, len(coordinates))
-	for _, coordinate := range coordinates {
-		x, err := strconv.ParseInt(coordinate.X, 10, 64)
-		if err != nil {
-			u.log.Errorf("unexpected coordinate %v", coordinate)
-			break
-		}
-		y, err := strconv.ParseInt(coordinate.Y, 10, 64)
-		if err != nil {
-			u.log.Errorf("unexpected coordinate %v", coordinate)
-			break
-		}
-
-		points = append(points, entity.Point{
-			X: x,
-			Y: y,
-		})
+func (u *Usecase) coordinateToPoint(coordinate generator.Coordinate) entity.Point {
+	x, err := strconv.ParseInt(coordinate.X, 10, 64)
+	if err != nil {
+		u.log.Errorf("unexpected coordinate %v", coordinate)
+	}
+	y, err := strconv.ParseInt(coordinate.Y, 10, 64)
+	if err != nil {
+		u.log.Errorf("unexpected coordinate %v", coordinate)
 	}
 
-	return points
+	return entity.Point{
+		X: x,
+		Y: y,
+	}
 }
 
 func (u *Usecase) pointsToCoordinates(points []entity.Point) []generator.Coordinate {

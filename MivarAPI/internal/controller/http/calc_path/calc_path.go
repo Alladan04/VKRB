@@ -2,6 +2,7 @@ package calc_path
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 
 	"mivar_robot_api/internal/controller/http/dto"
 	"mivar_robot_api/internal/entity"
+	calculate "mivar_robot_api/internal/usecase/calculate_path"
 )
 
 type CalcPathHandler struct {
@@ -43,6 +45,16 @@ func (h *CalcPathHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	start, end, modelID := h.convertDTOToEntity(bodyDTO)
 	path, timing, err := h.uc.CalculatePath(r.Context(), start, end, modelID)
 	if err != nil {
+		if errors.Is(err, calculate.ErrStartIsWall) {
+			http.Error(w, "start is wall", http.StatusBadRequest)
+			return
+		}
+
+		if errors.Is(err, calculate.ErrEndpointsAnavailable) {
+			http.Error(w, "start is wall", http.StatusBadRequest)
+			return
+		}
+
 		h.log.Errorf("Error calculating path: %v", err)
 		http.Error(w, "can't calculate path", http.StatusInternalServerError)
 		return
@@ -94,6 +106,6 @@ func (h *CalcPathHandler) convertEntityToDTO(path []entity.Transition, timing in
 
 	return dto.CalculatePathResponse{
 		Path: dtoPath,
-		Time: timing,
+		Time: timing * 1_000_000,
 	}, nil
 }

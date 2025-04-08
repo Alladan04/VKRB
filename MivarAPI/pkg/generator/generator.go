@@ -75,7 +75,7 @@ func (g *Generator) generateParamsFromMatrix(matrix [][]uint8) []Parameter {
 		g.log.Warn("Matrix is empty")
 		return []Parameter{}
 	}
-
+	//Записываем так, чтобы координаты в модели соответствовали координатам на карте (не соответствуют индексу элемента)
 	params := make([]Parameter, 0, len(matrix)*len(matrix[0]))
 	for y, row := range matrix {
 		for x, value := range row {

@@ -1,4 +1,4 @@
-package calculate_path
+package calculate
 
 import (
 	"context"

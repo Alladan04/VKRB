@@ -1,4 +1,4 @@
-package calculate_path
+package update
 
 import (
 	"github.com/sirupsen/logrus"
@@ -8,16 +8,14 @@ type Usecase struct {
 	log            *logrus.Logger
 	inMemRepo      Repo
 	modelGenerator ModelGenerator
-	manager        ModelManager
 	wimiCli        Client
 }
 
-func New(log *logrus.Logger, inMemRepo Repo, modelGenerator ModelGenerator, wimiCli Client, manager ModelManager) *Usecase {
+func New(log *logrus.Logger, inMemRepo Repo, modelGenerator ModelGenerator, wimiCli Client) *Usecase {
 	return &Usecase{
 		log:            log,
 		inMemRepo:      inMemRepo,
 		modelGenerator: modelGenerator,
 		wimiCli:        wimiCli,
-		manager:        manager,
 	}
 }

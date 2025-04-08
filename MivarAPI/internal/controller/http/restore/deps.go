@@ -1,15 +1,12 @@
-package update_map
+package restore
 
 import (
 	"context"
-
-	"mivar_robot_api/internal/entity"
 )
 
 type Usecase interface {
-	UpdateMap(
+	RestoreModel(
 		ctx context.Context,
-		points []entity.Point,
 		modelID string,
 	) ([][]uint8, error)
 }

@@ -1,4 +1,4 @@
-package calc_path
+package update_map
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 
 	"mivar_robot_api/internal/controller/http/dto"
 	"mivar_robot_api/internal/entity"
+	"mivar_robot_api/utils"
 )
 
 type UpdateMapHandler struct {
@@ -40,50 +41,40 @@ func (h *UpdateMapHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	labirint, err := h.uc.UpdateMap(
+		r.Context(),
+		h.convertDTOToEntity(bodyDTO),
+		strconv.FormatInt(bodyDTO.LabirintID, 10),
+	)
+	if err != nil {
+		h.log.Errorf("Error updating labirint: %v", err)
+		http.Error(w, "can't update labirint", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
-	//err = json.NewEncoder(w).Encode(resp)
-	//if err != nil {
-	//	h.log.Errorf("Error encoding response: %v", err)
-	//	return
-	//}
+	jsonData, err := json.Marshal(dto.MapOut{Labirint: utils.Uint8ToInt(labirint)})
+	if err != nil {
+		h.log.Errorf("Error encoding response: %v", err)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(string(jsonData))
+	if err != nil {
+		h.log.Errorf("Error encoding response: %v", err)
+		return
+	}
 }
 
-func (h *UpdateMapHandler) convertDTOToEntity(dto dto.CalculatePathRequest) (
-	start entity.Point,
-	end []entity.Point,
-	modelID string) {
-	endpoints := make([]entity.Point, 0, len(dto.End))
-	for _, p := range dto.End {
-		endpoints = append(endpoints, entity.Point{
+func (h *UpdateMapHandler) convertDTOToEntity(dto dto.UpdateMapIn) []entity.Point {
+	points := make([]entity.Point, 0, len(dto.Points))
+	for _, p := range dto.Points {
+		points = append(points, entity.Point{
 			X: p.X,
 			Y: p.Y,
 		})
 	}
 
-	return entity.Point{
-		X: dto.Start.X,
-		Y: dto.Start.Y,
-	}, endpoints, strconv.Itoa(int(dto.LabirintID))
-}
-
-func (h *UpdateMapHandler) convertEntityToDTO(path []entity.Transition, timing int64) (dto.CalculatePathResponse, error) {
-	dtoPath := make([]dto.Transition, 0, len(path))
-	for _, p := range path {
-		dtoPath = append(dtoPath, dto.Transition{
-			From: dto.Point{
-				X: p.From.X,
-				Y: p.From.Y,
-			},
-			To: dto.Point{
-				X: p.To.X,
-				Y: p.To.Y,
-			},
-		})
-	}
-
-	return dto.CalculatePathResponse{
-		Path: dtoPath,
-		Time: timing,
-	}, nil
+	return points
 }

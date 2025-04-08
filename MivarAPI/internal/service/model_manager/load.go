@@ -6,13 +6,13 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
 
 	"mivar_robot_api/internal/client/dto"
 	configer "mivar_robot_api/internal/config"
+	"mivar_robot_api/utils"
 )
 
 func (m *Manager) LoadModels(ctx context.Context) error {
@@ -35,7 +35,7 @@ func (m *Manager) LoadModels(ctx context.Context) error {
 				return
 			}
 
-			matrix, err := readMatrixFromFile(modelCfg.FilePath)
+			matrix, err := utils.ReadMatrixFromFile(modelCfg.FilePath)
 			if err != nil {
 				errCh <- fmt.Errorf("failed to read matrix for %s: %w", modelCfg.FilePath, err)
 				return
@@ -70,6 +70,11 @@ func (m *Manager) LoadModels(ctx context.Context) error {
 
 			g.Go(func() error {
 				m.inMemRepo.UpsertModelToCache(model, modelID)
+				return nil
+			})
+
+			g.Go(func() error {
+				m.inMemRepo.UpsertLabirintToCache(matrix, modelID)
 				return nil
 			})
 
@@ -111,34 +116,4 @@ func (m *Manager) LoadModels(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func readMatrixFromFile(filename string) ([][]uint8, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("read file: %w", err)
-	}
-
-	// Парсинг матрицы (примерная реализация)
-	var matrix [][]uint8
-	lines := strings.Split(string(data), "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		var row []uint8
-		for _, char := range strings.Split(line, " ") {
-			num, err := strconv.Atoi(char)
-			if err != nil {
-				return nil, fmt.Errorf("invalid matrix format: %w", err)
-			}
-			row = append(row, uint8(num))
-		}
-		matrix = append(matrix, row)
-	}
-
-	return matrix, nil
 }

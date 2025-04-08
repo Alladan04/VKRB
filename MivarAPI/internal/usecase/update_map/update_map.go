@@ -1,4 +1,4 @@
-package calculate_path
+package update
 
 import (
 	"context"
@@ -20,6 +20,7 @@ func (u *Usecase) UpdateMap(
 	}
 
 	newLabirint := flipPoints(labirint, points)
+
 	newModel, err := u.modelGenerator.GenerateModelFromLabyrinth(newLabirint, modelID)
 	if err != nil {
 		return nil, fmt.Errorf("modelGenerator.GenerateModelFromLabyrinth: %v", err)
@@ -47,12 +48,21 @@ func (u *Usecase) UpdateMap(
 
 func flipPoints(maze [][]uint8, points []entity.Point) [][]uint8 {
 	newMaze := make([][]uint8, len(maze))
+	for i := range maze {
+		newMaze[i] = make([]uint8, len(maze[i]))
+		copy(newMaze[i], maze[i])
+	}
 
 	// Инвертируем значения по указанным координатам
 	for _, p := range points {
 		newMaze[p.Y] = make([]uint8, len(maze[p.Y]))
 		if p.Y >= 0 && p.Y < int64(len(newMaze)) && p.X >= 0 && p.X < int64(len(newMaze[p.Y])) {
-			newMaze[p.Y][p.X] = 1 ^ maze[p.Y][p.X]
+			if maze[p.Y][p.X] == 0 {
+				newMaze[p.Y][p.X] = 1
+				continue
+			}
+
+			newMaze[p.Y][p.X] = 0
 		}
 	}
 

@@ -1,10 +1,10 @@
 model:
   - matrix_file_path: "./data/labirinth.txt"
-    model_xml_path: "./data/0.xml" #не используется
+    model_xml_path: "./data/0.xml"
     model_id: 0 #не используется
     size: 41 #не используется
   - matrix_file_path: "./data/labirinth2.txt"
-    model_xml_path: "./data/1.xml" #не используется
-    model_id: 1 #не используется
+    model_xml_path: "./data/1.xml"
+    model_id: 1
     size: 41 #не используется
 init_timeout: 1m
