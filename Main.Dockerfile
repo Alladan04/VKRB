@@ -27,8 +27,9 @@ COPY --from=builder /app/server .
 COPY ./MivarAPI/config.yaml .
 COPY ./MivarAPI/data ./data
 
+RUN chmod a+rw -R /app/data
 # Указываем порт (при необходимости)
 EXPOSE 8080
 
 # Команда запуска
-CMD ["./server"]
+CMD ["sh", "-c", "cd /app && ./server"]

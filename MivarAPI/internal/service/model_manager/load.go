@@ -17,6 +17,8 @@ import (
 
 func (m *Manager) LoadModels(ctx context.Context) error {
 	var wg sync.WaitGroup
+
+	m.log.Info("Current config:", m.cfg)
 	errCh := make(chan error, len(m.cfg.Model))
 
 	for i, modelCfg := range m.cfg.Model {
@@ -87,7 +89,7 @@ func (m *Manager) LoadModels(ctx context.Context) error {
 
 				m.log.Info(res)
 
-				if res.ErrorID == dto.ERR_MODEL_EXISTS {
+				if res != nil && res.ErrorID == dto.ERR_MODEL_EXISTS {
 					m.log.Info(fmt.Sprintf("Model %s already exists", modelID))
 					return nil
 				}

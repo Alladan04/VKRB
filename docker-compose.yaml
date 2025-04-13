@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  main-service:
+    build:
+      context: .
+      dockerfile: Main.Dockerfile
+    environment:
+      - API_URL=http://127.0.0.1:8080
+      - WIMI_URL=http://wimi-service:8092
+    ports:
+      - "8080:8080"
+    depends_on:
+      - wimi-service
+    networks:
+      - app-network
+
+  wimi-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8092:8092"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

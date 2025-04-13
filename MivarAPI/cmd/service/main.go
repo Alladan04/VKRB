@@ -38,18 +38,22 @@ func main() {
 	flag.StringVar(&configPath, "config", "", "path to config file")
 	flag.Parse()
 
+	logger := logrus.New()
+
 	if configPath == "" {
 		configPath = "config.yaml"
 	}
+
+	logger.Info("config path: ", configPath)
 	conf, err := configer.LoadConfig(configPath)
 	if err != nil {
 		panic(fmt.Sprintf("Cant laod config: %v", err))
 	}
 
-	logger := logrus.New()
+	logger.Info("loaded config")
 	wimiCli, err := mivar.New(
 		mivar.ClientConfig{
-			BaseURL:    "http://127.0.0.1:8092",
+			BaseURL:    "http://wimi-service:8092",
 			Timeout:    time.Second * 10,
 			HTTPClient: &http.Client{},
 		})
